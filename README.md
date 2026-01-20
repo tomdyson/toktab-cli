@@ -107,6 +107,35 @@ pytest
 toktab gpt-4o
 ```
 
+## Publishing a New Release
+
+1. **Update the version** in [pyproject.toml](pyproject.toml):
+   ```toml
+   version = "0.2.0"  # Bump version number
+   ```
+
+2. **Commit and push** your changes:
+   ```bash
+   git add pyproject.toml
+   git commit -m "Bump version to 0.2.0"
+   git push
+   ```
+
+3. **Create and push a git tag**:
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+4. **Create a GitHub release**:
+   ```bash
+   gh release create v0.2.0 --title "v0.2.0 - Release Title" --notes "Release notes here"
+   ```
+
+5. **Done!** GitHub Actions will automatically build and publish to PyPI.
+
+The package will be live at [pypi.org/project/toktab](https://pypi.org/project/toktab/) within 1-2 minutes.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
