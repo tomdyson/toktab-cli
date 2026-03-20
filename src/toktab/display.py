@@ -242,10 +242,16 @@ def display_providers(providers: list[str], json_output: bool = False) -> None:
     console.print()
 
 
-def display_error(message: str) -> None:
+def display_error(message: str, json_output: bool = False) -> None:
     """Display an error message.
 
     Args:
         message: The error message to display.
+        json_output: If True, output structured JSON error to stderr.
     """
-    console.print(f"[red]Error:[/red] {message}")
+    if json_output:
+        import sys
+        error_data = {"error": True, "message": message}
+        print(json.dumps(error_data), file=sys.stderr)
+    else:
+        console.print(f"[red]Error:[/red] {message}")

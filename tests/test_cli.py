@@ -1,11 +1,12 @@
 """Tests for the CLI commands."""
 
 import json
+import os
 
 import pytest
 from click.testing import CliRunner
 
-from toktab.cli import cli
+from toktab.cli import cli, _resolve_json_output
 
 
 @pytest.fixture
@@ -113,3 +114,88 @@ class TestSearchCommand:
         assert result.exit_code == 0
         parsed = json.loads(result.output)
         assert "results" in parsed
+
+
+class TestSchemaCommand:
+    def test_schema_outputs_valid_json(self, runner):
+        """Test schema command outputs valid JSON."""
+        result = runner.invoke(cli, ["schema"])
+
+        assert result.exit_code == 0
+        parsed = json.loads(result.output)
+        assert parsed["name"] == "toktab"
+        assert "commands" in parsed
+
+    def test_schema_contains_commands(self, runner):
+        """Test schema describes all commands."""
+        result = runner.invoke(cli, ["schema"])
+        parsed = json.loads(result.output)
+
+        assert "<model-slug>" in parsed["commands"]
+        assert "search" in parsed["commands"]
+        assert "schema" in parsed["commands"]
+
+    def test_schema_contains_agent_hints(self, runner):
+        """Test schema includes agent-friendly metadata."""
+        result = runner.invoke(cli, ["schema"])
+        parsed = json.loads(result.output)
+
+        hints = parsed["agent_hints"]
+        assert hints["output_format_env"] == "OUTPUT_FORMAT"
+        assert hints["auto_json_on_pipe"] is True
+        assert hints["json_flag"] == "--json"
+
+    def test_schema_contains_version(self, runner):
+        """Test schema includes version."""
+        from toktab import __version__
+        result = runner.invoke(cli, ["schema"])
+        parsed = json.loads(result.output)
+
+        assert parsed["version"] == __version__
+
+
+class TestOutputFormatResolution:
+    def test_explicit_json_flag(self, monkeypatch):
+        """Test --json flag takes priority."""
+        monkeypatch.setenv("OUTPUT_FORMAT", "text")
+        assert _resolve_json_output(True) is True
+
+    def test_env_json(self, monkeypatch):
+        """Test OUTPUT_FORMAT=json enables JSON."""
+        monkeypatch.setenv("OUTPUT_FORMAT", "json")
+        assert _resolve_json_output(False) is True
+
+    def test_env_text(self, monkeypatch):
+        """Test OUTPUT_FORMAT=text forces text output."""
+        monkeypatch.setenv("OUTPUT_FORMAT", "text")
+        assert _resolve_json_output(False) is False
+
+    def test_tty_detection_non_tty(self, monkeypatch):
+        """Test non-TTY stdout defaults to JSON."""
+        monkeypatch.delenv("OUTPUT_FORMAT")
+        monkeypatch.setattr("sys.stdout.isatty", lambda: False)
+        assert _resolve_json_output(False) is True
+
+    def test_tty_detection_tty(self, monkeypatch):
+        """Test TTY stdout defaults to text."""
+        monkeypatch.delenv("OUTPUT_FORMAT")
+        monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+        assert _resolve_json_output(False) is False
+
+
+class TestStructuredErrors:
+    def test_model_not_found_json_error(self, runner, httpx_mock):
+        """Test error output is structured JSON when --json is used."""
+        httpx_mock.add_response(status_code=404)
+
+        result = runner.invoke(cli, ["--json", "nonexistent"])
+
+        assert result.exit_code == 1
+
+    def test_search_error_json(self, runner, httpx_mock):
+        """Test search error with --json outputs structured error."""
+        httpx_mock.add_response(status_code=400)
+
+        result = runner.invoke(cli, ["search", "--json", ""])
+
+        assert result.exit_code == 1
