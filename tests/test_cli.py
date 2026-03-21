@@ -1,7 +1,6 @@
 """Tests for the CLI commands."""
 
 import json
-import os
 
 import pytest
 from click.testing import CliRunner
@@ -191,6 +190,9 @@ class TestStructuredErrors:
         result = runner.invoke(cli, ["--json", "nonexistent"])
 
         assert result.exit_code == 1
+        error_data = json.loads(result.stderr)
+        assert error_data["error"] is True
+        assert "not found" in error_data["message"]
 
     def test_search_error_json(self, runner, httpx_mock):
         """Test search error with --json outputs structured error."""
@@ -199,3 +201,6 @@ class TestStructuredErrors:
         result = runner.invoke(cli, ["search", "--json", ""])
 
         assert result.exit_code == 1
+        error_data = json.loads(result.stderr)
+        assert error_data["error"] is True
+        assert "message" in error_data

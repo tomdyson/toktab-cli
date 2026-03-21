@@ -3,6 +3,7 @@
 import json
 from typing import Any
 
+import click
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -250,8 +251,7 @@ def display_error(message: str, json_output: bool = False) -> None:
         json_output: If True, output structured JSON error to stderr.
     """
     if json_output:
-        import sys
         error_data = {"error": True, "message": message}
-        print(json.dumps(error_data), file=sys.stderr)
+        click.echo(json.dumps(error_data), err=True)
     else:
         console.print(f"[red]Error:[/red] {message}")

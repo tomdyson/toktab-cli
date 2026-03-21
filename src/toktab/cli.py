@@ -8,6 +8,7 @@ import click
 
 from toktab import __version__
 from toktab.api import (
+    BASE_URL,
     get_model,
     search as api_search,
     ModelNotFoundError,
@@ -134,7 +135,7 @@ def schema() -> None:
         "name": "toktab",
         "version": __version__,
         "description": "LLM pricing data at your fingertips",
-        "api_base_url": "https://toktab.com/api",
+        "api_base_url": BASE_URL,
         "agent_hints": {
             "output_format_env": "OUTPUT_FORMAT",
             "auto_json_on_pipe": True,
