@@ -70,6 +70,49 @@ Options:
   --help     Show this message and exit.
 ```
 
+## AI Agent Integration
+
+TokTab CLI is designed to work well with AI agents and automated pipelines.
+
+### Auto-detection
+
+When stdout is not a TTY (e.g. piped to another process), output switches to JSON automatically — no flags needed.
+
+```bash
+# Human at a terminal gets rich tables
+toktab gpt-4o
+
+# Piped to another process gets JSON
+toktab gpt-4o | jq .input_cost_per_token
+```
+
+### Environment variable
+
+Set `OUTPUT_FORMAT` to force a specific format:
+
+```bash
+export OUTPUT_FORMAT=json  # Always JSON
+export OUTPUT_FORMAT=text  # Always rich tables
+```
+
+### Schema introspection
+
+Agents can discover CLI capabilities at runtime:
+
+```bash
+toktab schema
+```
+
+This outputs a machine-readable JSON description of all commands, arguments, options, and API endpoints.
+
+### Structured errors
+
+When JSON output is active, errors are written to stderr as structured JSON:
+
+```json
+{"error": true, "message": "Model 'nonexistent' not found"}
+```
+
 ## Model Slugs
 
 Model identifiers are derived from LiteLLM model names with special characters replaced by hyphens.  
